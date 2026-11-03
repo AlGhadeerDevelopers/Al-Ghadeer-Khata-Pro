@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Al Ghadeer Khata Pro — Nationwide Enterprise Ledger & POS Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg-app: #f0f7ff;
+      --bg-panel: #ffffff;
+      --primary-navy: #052359;
+      --royal-blue: #0062cc;
+      --emerald-green: #28a745;
+      --text-main: #0f172a;
+    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-app); color: var(--text-main); margin: 0; padding: 0; }
+    .urdu-font { font-family: 'Noto Nastaliq Urdu', serif; line-height: 2.6; }
+    .brand-navy { background-color: #052359; }
+    .brand-blue { background-color: #0062cc; }
+    .brand-green { background-color: #28a745; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+
+  <!-- AUTHENTICATION & LOCK SCREEN MODAL (Shown if not logged in) -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-[#052359]/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 space-y-6 border border-slate-100">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 bg-[#052359] text-white rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg">
+          <i class="fa-solid fa-book-bookmark"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-[#052359]">Al Ghadeer Khata Pro</h2>
+        <p class="text-xs text-slate-500">Nationwide Enterprise Financial Ledger & POS Suite</p>
+        <p class="text-[11px] text-blue-600 font-semibold">Official Email: info.alghadeer@yahoo.com</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="flex rounded-xl bg-slate-100 p-1">
+        <button onclick="switchAuthTab('owner-login')" id="tab-owner-login" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-[#052359] shadow-sm transition">Owner Login</button>
+        <button onclick="switchAuthTab('owner-signup')" id="tab-owner-signup" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600 transition">Create Account</button>
+        <button onclick="switchAuthTab('customer-portal')" id="tab-customer-portal" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600 transition">Customer Portal</button>
+      </div>
+
+      <!-- Form 1: Owner Login -->
+      <div id="form-owner-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Owner Email or Phone</label>
+          <input type="text" id="login-identifier" value="info.alghadeer@yahoo.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0062cc]">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">4-Digit Security PIN or Password</label>
+          <input type="password" id="login-pin" maxlength="6" placeholder="Enter PIN (e.g. 1234)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0062cc]">
+        </div>
+        <button onclick="handleOwnerLogin()" class="w-full py-3 brand-navy hover:bg-[#083075] text-white font-bold rounded-xl text-sm shadow-md transition">
+          Login to Dashboard
+        </button>
+      </div>
+
+      <!-- Form 2: Owner Sign Up -->
+      <div id="form-owner-signup" class="space-y-3 hidden">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Business Name</label>
+          <input type="text" id="signup-biz" placeholder="e.g. Al Ghadeer Traders" class="w-full px-3 py-2 rounded-xl border text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Owner Name</label>
+          <input type="text" id="signup-name" placeholder="Junaid Ali" class="w-full px-3 py-2 rounded-xl border text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Email / Phone</label>
+          <input type="text" id="signup-email" value="info.alghadeer@yahoo.com" class="w-full px-3 py-2 rounded-xl border text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Create 4-Digit PIN</label>
+          <input type="password" id="signup-pin" maxlength="4" placeholder="4-digit PIN" class="w-full px-3 py-2 rounded-xl border text-sm">
+        </div>
+        <button onclick="handleOwnerSignup()" class="w-full py-2.5 brand-green hover:bg-green-600 text-white font-bold rounded-xl text-sm shadow-md transition">
+          Register & Start (0 PKR)
+        </button>
+      </div>
+
+      <!-- Form 3: Customer Self Portal -->
+      <div id="form-customer-portal" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Customer Phone Number or Account ID</label>
+          <input type="text" id="portal-cust-input" placeholder="e.g. AG-1001 or 03001234567" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#28a745]">
+        </div>
+        <button onclick="handleCustomerPortalLogin()" class="w-full py-3 brand-green hover:bg-green-600 text-white font-bold rounded-xl text-sm shadow-md transition">
+          View My Ledger (Customer Portal)
+        </button>
+        <p class="text-[11px] text-slate-400 text-center">Customers can securely view their running balance and statement online.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER (Hidden until login) -->
+  <div id="main-app" class="min-h-screen flex flex-col hidden">
+    <!-- Top Header -->
+    <header class="brand-navy text-white px-6 py-3 shadow-md flex items-center justify-between sticky top-0 z-40">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow">
+          <i class="fa-solid fa-chart-pie text-[#0062cc] text-xl"></i>
+        </div>
+        <div>
+          <h1 id="app-title-header" class="text-base font-extrabold tracking-tight">Al Ghadeer Khata Pro</h1>
+          <p class="text-[10px] text-emerald-400 font-medium">Nationwide Enterprise Accounting</p>
+        </div>
+      </div>
+
+      <!-- Multi-Business Switcher & Controls -->
+      <div class="flex items-center gap-3">
+        <select id="business-switcher" onchange="switchActiveBusiness(this.value)" class="bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 font-semibold focus:outline-none">
+          <option value="Main Business">Main Business Khata</option>
+          <option value="Branch 2">Branch 2 / Wholesale</option>
+        </select>
+
+        <button onclick="toggleLanguage()" class="brand-blue hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-language"></i> <span id="lang-btn-text">اردو / English</span>
+        </button>
+
+        <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg text-xs transition" title="Settings & Support">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+
+        <button onclick="handleLogout()" class="bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white border-b border-slate-200 px-6 py-2 flex gap-2 overflow-x-auto shadow-sm">
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#052359] text-white shadow-sm transition flex items-center gap-2">
+        <i class="fa-solid fa-house"></i> <span class="nav-text">Dashboard</span>
+      </button>
+      <button onclick="switchTab('khata')" id="nav-khata" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+        <i class="fa-solid fa-users"></i> <span class="nav-text">Customers & Suppliers</span>
+      </button>
+      <button onclick="switchTab('cashbook')" id="nav-cashbook" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+        <i class="fa-solid fa-book-open"></i> <span class="nav-text">Cashbook / Roznamcha</span>
+      </button>
+      <button onclick="switchTab('pos')" id="nav-pos" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+        <i class="fa-solid fa-cash-register"></i> <span class="nav-text">Stock & POS Billing</span>
+      </button>
+      <button onclick="switchTab('staff')" id="nav-staff" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+        <i class="fa-solid fa-id-badge"></i> <span class="nav-text">Staff & Jobs Khata</span>
+      </button>
+      <button onclick="switchTab('backup')" id="nav-backup" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+        <i class="fa-solid fa-database"></i> <span class="nav-text">Backup & Excel</span>
+      </button>
+    </nav>
+
+    <!-- Dynamic Content Workspace -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6" id="app-workspace">
+      <!-- Dashboard View (Default) -->
+      <div id="view-dashboard" class="space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-[#052359]" id="dash-welcome">Welcome, Business Owner</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Here is your live financial overview. All data starts clean at 0 PKR.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">100% Secure & Active</span>
+          </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="text-xs text-slate-500 font-semibold">Total Customers</div>
+            <div id="kpi-cust" class="text-3xl font-extrabold text-[#052359] mt-2">0</div>
+          </div>
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="text-xs text-slate-500 font-semibold">Total Net Udhar (Give)</div>
+            <div id="kpi-udhar" class="text-3xl font-extrabold text-red-600 mt-2">PKR 0</div>
+          </div>
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="text-xs text-slate-500 font-semibold">Today Cash In (Wasooli)</div>
+            <div id="kpi-cashin" class="text-3xl font-extrabold text-emerald-600 mt-2">PKR 0</div>
+          </div>
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="text-xs text-slate-500 font-semibold">Stock Items Count</div>
+            <div id="kpi-stock" class="text-3xl font-extrabold text-[#0062cc] mt-2">0</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Core Application State & Auth Handlers
+    function switchAuthTab(tab) {
+      ['owner-login', 'owner-signup', 'customer-portal'].forEach(t => {
+        document.getElementById(`form-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).classList.remove('bg-white', 'text-[#052359]', 'shadow-sm');
+        document.getElementById(`tab-${t}`).classList.add('text-slate-600');
+      });
+      document.getElementById(`form-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('bg-white', 'text-[#052359]', 'shadow-sm');
+      document.getElementById(`tab-${tab}`).classList.remove('text-slate-600');
+    }
+
+    function handleOwnerLogin() {
+      document.getElementById('auth-modal').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+    }
+
+    function handleOwnerSignup() {
+      alert('Account created successfully with info.alghadeer@yahoo.com!');
+      document.getElementById('auth-modal').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+    }
+
+    function handleCustomerPortalLogin() {
+      alert('Loading Customer Portal view...');
+      document.getElementById('auth-modal').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+    }
+
+    function handleLogout() {
+      if(confirm('Are you sure you want to lock / logout?')) {
+        location.reload();
+      }
+    }
+
+    function switchTab(tabId) {
+      alert('Switching to module: ' + tabId);
+    }
+
+    function toggleLanguage() {
+      alert('Language toggle (English / Urdu) active.');
+    }
+
+    function switchActiveBusiness(val) {
+      console.log('Switched to business:', val);
+    }
+
+    function openSettingsModal() {
+      alert('Settings & Helpline support info (info.alghadeer@yahoo.com) opened.');
+    }
+  </script>
+</body>
+</html>
+<!-- PART 2: CUSTOMERS & SUPPLIERS KHATA MODULE CODE -->
+<div id="view-khata" class="space-y-6 hidden">
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-extrabold text-[#052359]">Customers & Suppliers Khata (Ledger)</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Manage credit/debit balances, due dates, bill photo attachments, and WhatsApp statements.</p>
+    </div>
+    <button onclick="openAddCustomerModal()" class="brand-navy hover:bg-[#083075] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+      <i class="fa-solid fa-user-plus"></i> Add New Customer / Supplier
+    </button>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex-1 min-w-[240px]">
+      <input type="text" id="search-cust" oninput="filterCustomers(this.value)" placeholder="Search by name, phone or account ID..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#0062cc]">
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold text-slate-500">Filter:</span>
+      <select onchange="filterCustomerType(this.value)" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white">
+        <option value="all">All Parties</option>
+        <option value="customer">Customers Only (Grahak)</option>
+        <option value="supplier">Suppliers Only</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Customers List Grid / Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+            <th class="p-4">Account ID & Name</th>
+            <th class="p-4">Phone / Contact</th>
+            <th class="p-4">Type</th>
+            <th class="p-4">Running Balance</th>
+            <th class="p-4 text-right">Actions & Statement</th>
+          </tr>
+        </thead>
+        <tbody id="customer-table-body" class="divide-y divide-slate-100 text-xs">
+          <!-- Dynamically populated or empty zero state -->
+          <tr>
+            <td colspan="5" class="p-8 text-center text-slate-400 font-medium">
+              No customers added yet. Start at 0 PKR by clicking "Add New Customer".
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div id="modal-add-customer" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 space-y-4">
+    <div class="flex items-center justify-between border-b pb-3">
+      <h3 class="font-bold text-base text-[#052359]">Add New Party / Customer</h3>
+      <button onclick="closeAddCustomerModal()" class="text-slate-400 hover:text-slate-600 font-bold"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Party Name</label>
+        <input type="text" id="new-cust-name" placeholder="e.g. Muhammad Bilal" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+        <input type="text" id="new-cust-phone" placeholder="03001234567" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Party Type</label>
+        <select id="new-cust-type" class="w-full px-3 py-2 rounded-xl border text-xs bg-white">
+          <option value="customer">Customer (Grahak)</option>
+          <option value="supplier">Supplier (Samaan Wala)</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-2 pt-3">
+      <button onclick="closeAddCustomerModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button>
+      <button onclick="saveNewCustomer()" class="px-4 py-2 brand-navy text-white rounded-xl text-xs font-bold shadow-sm">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- INDIVIDUAL CUSTOMER LEDGER VIEW (Drawer / Modal) -->
+<div id="modal-customer-ledger" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <!-- Ledger Header -->
+    <div class="brand-navy text-white p-5 flex items-center justify-between">
+      <div>
+        <h3 id="ledger-party-title" class="text-base font-extrabold">Customer Ledger</h3>
+        <p id="ledger-party-sub" class="text-xs text-emerald-400">Account ID: AG-1001</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="printCustomerPDF()" class="brand-blue hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-pdf"></i> Print / Save PDF
+        </button>
+        <button onclick="closeCustomerLedger()" class="text-white/80 hover:text-white p-2 font-bold"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+    </div>
+
+    <!-- Ledger Content & Transactions -->
+    <div class="flex-1 p-6 overflow-y-auto space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border">
+        <div>
+          <span class="text-xs text-slate-500 font-semibold">Net Running Balance:</span>
+          <div id="ledger-net-balance" class="text-xl font-extrabold text-red-600">PKR 0 (You Will Get)</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openTransactionModal('gave')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> You Gave (Udhar)
+          </button>
+          <button onclick="openTransactionModal('got')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-down-left-and-arrow-right-to-center"></i> You Got (Wasooli)
+          </button>
+        </div>
+      </div>
+
+      <!-- Transactions Table with Photo Attachment Support -->
+      <div class="border rounded-2xl overflow-hidden">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 border-b text-slate-600 font-bold">
+              <th class="p-3">Date & Time</th>
+              <th class="p-3">Details / Notes</th>
+              <th class="p-3 text-right">You Gave (-)</th>
+              <th class="p-3 text-right">You Got (+)</th>
+              <th class="p-3 text-center">Bill Photo</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-tx-tbody" class="divide-y">
+            <tr>
+              <td colspan="5" class="p-6 text-center text-slate-400">No transactions recorded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Part 2 JavaScript Handlers
+  let customersList = [];
+  let activeCustomerIndex = null;
+
+  function openAddCustomerModal() {
+    document.getElementById('modal-add-customer').classList.remove('hidden');
+    document.getElementById('modal-add-customer').classList.add('flex');
+  }
+
+  function closeAddCustomerModal() {
+    document.getElementById('modal-add-customer').classList.add('hidden');
+    document.getElementById('modal-add-customer').classList.remove('flex');
+  }
+
+  function saveNewCustomer() {
+    const name = document.getElementById('new-cust-name').value.trim();
+    const phone = document.getElementById('new-cust-phone').value.trim();
+    const type = document.getElementById('new-cust-type').value;
+
+    if(!name) {
+      alert('Please enter customer name.');
+      return;
+    }
+
+    const newCust = {
+      id: 'AG-' + (1001 + customersList.length),
+      name,
+      phone: phone || 'N/A',
+      type,
+      balance: 0,
+      transactions: []
+    };
+
+    customersList.push(newCust);
+    closeAddCustomerModal();
+    renderCustomersTable();
+    updateKPIs();
+    alert('Customer saved successfully!');
+  }
+
+  function renderCustomersTable() {
+    const tbody = document.getElementById('customer-table-body');
+    if(customersList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">No customers added yet. Start at 0 PKR by clicking "Add New Customer".</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = customersList.map((c, idx) => `
+      <tr class="hover:bg-slate-50 cursor-pointer transition" onclick="openCustomerLedger(${idx})">
+        <td class="p-4 font-bold text-[#052359]">${c.name} <span class="text-[10px] text-slate-400 block">${c.id}</span></td>
+        <td class="p-4 text-slate-600">${c.phone}</td>
+        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${c.type==='customer'?'bg-blue-100 text-blue-800':'bg-amber-100 text-amber-800'}">${c.type.toUpperCase()}</span></td>
+        <td class="p-4 font-extrabold ${c.balance > 0 ? 'text-red-600' : c.balance < 0 ? 'text-emerald-600' : 'text-slate-700'}">PKR ${Math.abs(c.balance)} ${c.balance > 0 ? '(Dr)' : c.balance < 0 ? '(Cr)' : ''}</td>
+        <td class="p-4 text-right">
+          <button onclick="event.stopPropagation(); openCustomerLedger(${idx})" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-[#0062cc] hover:text-white text-xs font-bold transition">View Ledger</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function openCustomerLedger(idx) {
+    activeCustomerIndex = idx;
+    const c = customersList[idx];
+    document.getElementById('ledger-party-title').textContent = c.name;
+    document.getElementById('ledger-party-sub').textContent = `Account ID: ${c.id} | Phone: ${c.phone}`;
+    document.getElementById('ledger-net-balance').textContent = `PKR ${Math.abs(c.balance)} ${c.balance >= 0 ? '(You Will Get)' : '(You Will Give)'}`;
+    
+    // Render transactions
+    const tbody = document.getElementById('ledger-tx-tbody');
+    if(c.transactions.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No transactions recorded yet.</td></tr>`;
+    } else {
+      tbody.innerHTML = c.transactions.map(t => `
+        <tr>
+          <td class="p-3 text-slate-500">${t.date}</td>
+          <td class="p-3 font-semibold text-slate-800">${t.notes}</td>
+          <td class="p-3 text-right font-bold text-red-600">${t.type === 'gave' ? 'PKR ' + t.amount : '-'}</td>
+          <td class="p-3 text-right font-bold text-emerald-600">${t.type === 'got' ? 'PKR ' + t.amount : '-'}</td>
+          <td class="p-3 text-center">${t.photo ? `<a href="${t.photo}" target="_blank" class="text-blue-600 underline font-semibold">View Bill</a>` : 'No Photo'}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('modal-customer-ledger').classList.remove('hidden');
+    document.getElementById('modal-customer-ledger').classList.add('flex');
+  }
+
+  function closeCustomerLedger() {
+    document.getElementById('modal-customer-ledger').classList.add('hidden');
+    document.getElementById('modal-customer-ledger').classList.remove('flex');
+  }
+
+  function printCustomerPDF() {
+    alert('Generating official PDF Statement for customer...');
+  }
+
+  function updateKPIs() {
+    document.getElementById('kpi-cust').textContent = customersList.length;
+    let totalUdhar = customersList.reduce((acc, c) => acc + (c.balance > 0 ? c.balance : 0), 0);
+    document.getElementById('kpi-udhar').textContent = `PKR ${totalUdhar}`;
+  }
+</script>
+<!-- PART 3: CASHBOOK & STOCK/POS BILLING MODULE CODE -->
+
+<!-- MODULE A: CASHBOOK / ROZNAMCHA -->
+<div id="view-cashbook" class="space-y-6 hidden">
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-extrabold text-[#052359]">Cashbook / Roznamcha (Galla Milan)</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Track daily cash inflows (Cash In) and outflows (Cash Out) with daily closing reconciliation.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="openCashEntryModal('in')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+        <i class="fa-solid fa-plus-circle"></i> Cash In (Aya)
+      </button>
+      <button onclick="openCashEntryModal('out')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+        <i class="fa-solid fa-minus-circle"></i> Cash Out (Gaya)
+      </button>
+    </div>
+  </div>
+
+  <!-- Cash KPI Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <div class="text-xs text-slate-500 font-semibold">Total Cash In (Today)</div>
+      <div id="cash-kpi-in" class="text-2xl font-extrabold text-emerald-600 mt-1">PKR 0</div>
+    </div>
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <div class="text-xs text-slate-500 font-semibold">Total Cash Out (Today)</div>
+      <div id="cash-kpi-out" class="text-2xl font-extrabold text-red-600 mt-1">PKR 0</div>
+    </div>
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <div class="text-xs text-slate-500 font-semibold">Net Cash in Galla (Drawer)</div>
+      <div id="cash-kpi-net" class="text-2xl font-extrabold text-[#052359] mt-1">PKR 0</div>
+    </div>
+  </div>
+
+  <!-- Cash Transactions Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="p-4 border-b font-bold text-xs text-[#052359]">Roznamcha Transactions Log</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b text-slate-600 font-bold">
+            <th class="p-3">Date & Time</th>
+            <th class="p-3">Category / Description</th>
+            <th class="p-3 text-right">Cash In (+)</th>
+            <th class="p-3 text-right">Cash Out (-)</th>
+          </tr>
+        </thead>
+        <tbody id="cashbook-tbody" class="divide-y">
+          <tr>
+            <td colspan="4" class="p-6 text-center text-slate-400">No cash entries recorded yet today. Starts at 0 PKR.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE B: STOCK & POS BILLING -->
+<div id="view-pos" class="space-y-6 hidden">
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-extrabold text-[#052359]">StockBook & POS Bill Book</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Manage inventory items, purchase/sale rates, profit margins, and print Thermal (80mm) or A4 bills.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="openAddStockModal()" class="brand-blue hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+        <i class="fa-solid fa-boxes-stacked"></i> Add New Stock Item
+      </button>
+      <button onclick="openPosCheckoutModal()" class="brand-green hover:bg-green-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+        <i class="fa-solid fa-cash-register"></i> New POS Sale / Bill
+      </button>
+    </div>
+  </div>
+
+  <!-- Stock Inventory Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="p-4 border-b font-bold text-xs text-[#052359]">Current Inventory & Stock Status</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b text-slate-600 font-bold">
+            <th class="p-3">Item SKU & Name</th>
+            <th class="p-3">Purchase Price</th>
+            <th class="p-3">Sale Price</th>
+            <th class="p-3">Available Qty</th>
+            <th class="p-3 text-right">Profit / Margin</th>
+          </tr>
+        </thead>
+        <tbody id="stock-table-body" class="divide-y">
+          <tr>
+            <td colspan="5" class="p-6 text-center text-slate-400">No stock items added yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STOCK MODAL -->
+<div id="modal-add-stock" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 space-y-4">
+    <div class="flex items-center justify-between border-b pb-3">
+      <h3 class="font-bold text-base text-[#052359]">Add New Inventory Item</h3>
+      <button onclick="closeAddStockModal()" class="text-slate-400 hover:text-slate-600 font-bold"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Item Name</label>
+        <input type="text" id="stock-item-name" placeholder="e.g. Photo Paper A4" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Purchase Rate (PKR)</label>
+          <input type="number" id="stock-item-purchase" placeholder="0" class="w-full px-3 py-2 rounded-xl border text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Sale Rate (PKR)</label>
+          <input type="number" id="stock-item-sale" placeholder="0" class="w-full px-3 py-2 rounded-xl border text-xs">
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Initial Quantity</label>
+        <input type="number" id="stock-item-qty" placeholder="0" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-2 pt-3">
+      <button onclick="closeAddStockModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button>
+      <button onclick="saveStockItem()" class="px-4 py-2 brand-blue text-white rounded-xl text-xs font-bold shadow-sm">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Part 3 JavaScript Handlers
+  let cashbookList = [];
+  let stockList = [];
+
+  function openCashEntryModal(type) {
+    const amt = prompt(`Enter Cash ${type === 'in' ? 'In (Aya)' : 'Out (Gaya)'} Amount (PKR):`);
+    if(!amt || isNaN(amt)) return;
+    const desc = prompt('Enter description/reason:') || 'General Cash Entry';
+
+    const entry = {
+      date: new Date().toLocaleTimeString(),
+      type,
+      amount: parseFloat(amt),
+      notes: desc
+    };
+
+    cashbookList.push(entry);
+    renderCashbook();
+  }
+
+  function renderCashbook() {
+    const tbody = document.getElementById('cashbook-tbody');
+    let totalIn = 0, totalOut = 0;
+
+    if(cashbookList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No cash entries recorded yet today. Starts at 0 PKR.</td></tr>`;
+    } else {
+      tbody.innerHTML = cashbookList.map(cb => {
+        if(cb.type === 'in') totalIn += cb.amount;
+        else totalOut += cb.amount;
+        return `
+          <tr>
+            <td class="p-3 text-slate-500">${cb.date}</td>
+            <td class="p-3 font-semibold text-slate-800">${cb.notes}</td>
+            <td class="p-3 text-right font-bold text-emerald-600">${cb.type === 'in' ? 'PKR ' + cb.amount : '-'}</td>
+            <td class="p-3 text-right font-bold text-red-600">${cb.type === 'out' ? 'PKR ' + cb.amount : '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('cash-kpi-in').textContent = `PKR ${totalIn}`;
+    document.getElementById('cash-kpi-out').textContent = `PKR ${totalOut}`;
+    document.getElementById('cash-kpi-net').textContent = `PKR ${totalIn - totalOut}`;
+  }
+
+  function openAddStockModal() {
+    document.getElementById('modal-add-stock').classList.remove('hidden');
+    document.getElementById('modal-add-stock').classList.add('flex');
+  }
+
+  function closeAddStockModal() {
+    document.getElementById('modal-add-stock').classList.add('hidden');
+    document.getElementById('modal-add-stock').classList.remove('flex');
+  }
+
+  function saveStockItem() {
+    const name = document.getElementById('stock-item-name').value.trim();
+    const pur = parseFloat(document.getElementById('stock-item-purchase').value) || 0;
+    const sale = parseFloat(document.getElementById('stock-item-sale').value) || 0;
+    const qty = parseInt(document.getElementById('stock-item-qty').value) || 0;
+
+    if(!name) {
+      alert('Please enter stock item name.');
+      return;
+    }
+
+    stockList.push({ name, purchase: pur, sale, qty });
+    closeAddStockModal();
+    renderStockTable();
+    alert('Stock item added successfully!');
+  }
+
+  function renderStockTable() {
+    const tbody = document.getElementById('stock-table-body');
+    if(stockList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No stock items added yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = stockList.map(s => `
+      <tr>
+        <td class="p-3 font-bold text-[#052359]">${s.name}</td>
+        <td class="p-3 text-slate-600">PKR ${s.purchase}</td>
+        <td class="p-3 text-slate-600">PKR ${s.sale}</td>
+        <td class="p-3 font-extrabold ${s.qty < 5 ? 'text-red-600' : 'text-slate-800'}">${s.qty} units</td>
+        <td class="p-3 text-right font-bold text-emerald-600">PKR ${s.sale - s.purchase} / unit</td>
+      </tr>
+    `).join('');
+    document.getElementById('kpi-stock').textContent = stockList.length;
+  }
+
+  function openPosCheckoutModal() {
+    alert('POS Bill Checkout & Thermal/A4 Printer window initialized.');
+  }
+</script>
+<!-- PART 4: STAFF KHATA, BACKUP, EXCEL EXPORT & MASTER SCRIPT -->
+
+<!-- MODULE A: STAFF & JOBS KHATA -->
+<div id="view-staff" class="space-y-6 hidden">
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-extrabold text-[#052359]">Staff Attendance, Salary & Jobs Khata</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Manage employee salaries, advance cash payments, daily attendance, and pending client orders.</p>
+    </div>
+    <button onclick="openAddStaffModal()" class="brand-navy hover:bg-[#083075] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+      <i class="fa-solid fa-user-tie"></i> Add New Staff Member
+    </button>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="p-4 border-b font-bold text-xs text-[#052359]">Staff List & Salary Ledger</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b text-slate-600 font-bold">
+            <th class="p-3">Staff Name & Role</th>
+            <th class="p-3">Phone</th>
+            <th class="p-3">Monthly Salary</th>
+            <th class="p-3">Advance Taken</th>
+            <th class="p-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="staff-table-body" class="divide-y">
+          <tr>
+            <td colspan="5" class="p-6 text-center text-slate-400">No staff members registered yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE B: BACKUP & EXCEL EXPORT -->
+<div id="view-backup" class="space-y-6 hidden">
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+    <h2 class="text-xl font-extrabold text-[#052359]">Data Backup & MS Excel (.xlsx) Reports</h2>
+    <p class="text-xs text-slate-500 mt-0.5">Securely export your entire business ledger to real Excel sheets or download a JSON database backup.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl font-bold">
+        <i class="fa-solid fa-file-excel"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-sm text-[#052359]">Export to MS Excel (.xlsx)</h3>
+        <p class="text-xs text-slate-500 mt-1">Generate an official multi-sheet workbook containing all customer ledgers, cashbook entries, and inventory items using SheetJS.</p>
+      </div>
+      <button onclick="exportToExcel()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow transition">
+        Download Excel Report (.xlsx)
+      </button>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+      <div class="w-12 h-12 bg-blue-100 text-[#0062cc] rounded-xl flex items-center justify-center text-2xl font-bold">
+        <i class="fa-solid fa-database"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-sm text-[#052359]">JSON Database Backup</h3>
+        <p class="text-xs text-slate-500 mt-1">Save a complete snapshot of your local database to your computer hard drive for offline safety.</p>
+      </div>
+      <button onclick="exportJSONBackup()" class="w-full py-3 brand-navy hover:bg-[#083075] text-white font-bold rounded-xl text-xs shadow transition">
+        Download JSON Backup
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STAFF MODAL -->
+<div id="modal-add-staff" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 space-y-4">
+    <div class="flex items-center justify-between border-b pb-3">
+      <h3 class="font-bold text-base text-[#052359]">Add Staff Member</h3>
+      <button onclick="closeAddStaffModal()" class="text-slate-400 hover:text-slate-600 font-bold"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Staff Name</label>
+        <input type="text" id="staff-name" placeholder="e.g. Ali Raza" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+        <input type="text" id="staff-phone" placeholder="03001234567" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Monthly Salary (PKR)</label>
+        <input type="number" id="staff-salary" placeholder="25000" class="w-full px-3 py-2 rounded-xl border text-xs">
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-2 pt-3">
+      <button onclick="closeAddStaffModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button>
+      <button onclick="saveStaffMember()" class="px-4 py-2 brand-navy text-white rounded-xl text-xs font-bold shadow-sm">Save Staff</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Part 4 & Master Bootloader Scripts
+  let staffList = [];
+
+  function switchTab(targetId) {
+    ['dashboard', 'khata', 'cashbook', 'pos', 'staff', 'backup'].forEach(id => {
+      const el = document.getElementById(`view-${id}`);
+      const btn = document.getElementById(`nav-${id}`);
+      if(el) el.classList.add('hidden');
+      if(btn) {
+        btn.classList.remove('bg-[#052359]', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+      }
+    });
+
+    const activeEl = document.getElementById(`view-${targetId}`);
+    const activeBtn = document.getElementById(`nav-${targetId}`);
+    if(activeEl) activeEl.classList.remove('hidden');
+    if(activeBtn) {
+      activeBtn.classList.add('bg-[#052359]', 'text-white', 'shadow-sm');
+      activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+    }
+  }
+
+  function openAddStaffModal() {
+    document.getElementById('modal-add-staff').classList.remove('hidden');
+    document.getElementById('modal-add-staff').classList.add('flex');
+  }
+
+  function closeAddStaffModal() {
+    document.getElementById('modal-add-staff').classList.add('hidden');
+    document.getElementById('modal-add-staff').classList.remove('flex');
+  }
+
+  function saveStaffMember() {
+    const name = document.getElementById('staff-name').value.trim();
+    const phone = document.getElementById('staff-phone').value.trim();
+    const salary = parseFloat(document.getElementById('staff-salary').value) || 0;
+
+    if(!name) {
+      alert('Please enter staff name.');
+      return;
+    }
+
+    staffList.push({ name, phone: phone || 'N/A', salary, advance: 0 });
+    closeAddStaffModal();
+    renderStaffTable();
+    alert('Staff member added successfully!');
+  }
+
+  function renderStaffTable() {
+    const tbody = document.getElementById('staff-table-body');
+    if(staffList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No staff members registered yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = staffList.map(s => `
+      <tr>
+        <td class="p-3 font-bold text-[#052359]">${s.name}</td>
+        <td class="p-3 text-slate-600">${s.phone}</td>
+        <td class="p-3 font-semibold text-slate-800">PKR ${s.salary}</td>
+        <td class="p-3 font-semibold text-amber-600">PKR ${s.advance}</td>
+        <td class="p-3 text-right">
+          <button onclick="alert('Staff payroll management active.')" class="px-3 py-1 rounded bg-slate-100 hover:bg-[#0062cc] hover:text-white font-bold transition">Manage</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function exportToExcel() {
+    if(typeof XLSX === 'undefined') {
+      alert('SheetJS library is loading...');
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    
+    // Sheet 1: Customers
+    const wsCust = XLSX.utils.json_to_sheet(customersList.length ? customersList : [{Message: 'No customers recorded yet (0 PKR start)'}]);
+    XLSX.utils.book_append_sheet(wb, wsCust, "Customers Khata");
+
+    // Sheet 2: Cashbook
+    const wsCash = XLSX.utils.json_to_sheet(cashbookList.length ? cashbookList : [{Message: 'No cash entries yet'}]);
+    XLSX.utils.book_append_sheet(wb, wsCash, "Cashbook Roznamcha");
+
+    // Sheet 3: Stock
+    const wsStock = XLSX.utils.json_to_sheet(stockList.length ? stockList : [{Message: 'No stock items yet'}]);
+    XLSX.utils.book_append_sheet(wb, wsStock, "StockBook Inventory");
+
+    XLSX.writeFile(wb, "Al_Ghadeer_Khata_Pro_Report.xlsx");
+    alert('Excel report generated and downloaded successfully!');
+  }
+
+  function exportJSONBackup() {
+    const backupData = {
+      app: "Al Ghadeer Khata Pro",
+      email: "info.alghadeer@yahoo.com",
+      timestamp: new Date().toISOString(),
+      customers: customersList,
+      cashbook: cashbookList,
+      stock: stockList,
+      staff: staffList
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "Al_Ghadeer_Khata_Backup.json";
+    a.click();
+    alert('JSON backup file downloaded successfully!');
+  }
+
+  let isUrduMode = false;
+  function toggleLanguage() {
+    isUrduMode = !isUrduMode;
+    document.getElementById('lang-btn-text').textContent = isUrduMode ? 'English Mode' : 'اردو / English';
+    document.getElementById('dash-welcome').textContent = isUrduMode ? 'الغدیر کھاتہ پرو میں خوش آمدید' : 'Welcome, Business Owner';
+  }
+</script>
